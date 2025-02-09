@@ -1,6 +1,65 @@
 require 'jekyll'
 
 module AlImgTools
+  # Directory structure constants
+  PLUGIN_NAME = 'al_img_tools'
+  ASSETS_DIR = 'assets'
+  JS_DIR = 'js'
+  JS_FILES = ['zoom.js', 'photoswipe-setup.js', 'venobox-setup.js'].freeze
+
+  # Custom StaticFile class to track when files are written
+  class PluginStaticFile < Jekyll::StaticFile
+    def write(dest)
+      Jekyll.logger.debug("AlImgTools:", "Attempting to copy from #{path} to #{destination(dest)}")
+      super(dest).tap do |result|
+        if result
+          Jekyll.logger.info("AlImgTools:", "Successfully copied #{name} from #{path} to #{destination(dest)}")
+        else
+          Jekyll.logger.error("AlImgTools:", "Failed to copy #{name} from #{path}")
+        end
+      end
+    end
+  end
+
+  class AssetsGenerator < Jekyll::Generator
+    safe true
+    priority :low
+
+    def generate(site)
+      # Get the plugin's assets directory path - now includes the full desired structure
+      plugin_lib_path = File.expand_path('.', __dir__)
+      Jekyll.logger.info("AlImgTools:", "Plugin lib directory: #{plugin_lib_path}")
+
+      # Register each JS file
+      JS_FILES.each do |js_file|
+        # Construct source path - now includes the full path structure we want in the output
+        source_path = File.join(plugin_lib_path, ASSETS_DIR, PLUGIN_NAME, JS_DIR, js_file)
+        Jekyll.logger.info("AlImgTools:", "Looking for source file: #{source_path}")
+
+        # Only add the file if it exists
+        if File.exist?(source_path)
+          # Create a static file with:
+          # - site: the Jekyll site instance
+          # - base: the base directory containing the file
+          # - dir: the directory relative to base (used to construct the destination path)
+          # - name: the file name
+          static_file = PluginStaticFile.new(
+            site,
+            plugin_lib_path,                            # base directory
+            File.join(ASSETS_DIR, PLUGIN_NAME, JS_DIR), # source dir relative to base
+            js_file                                     # filename
+          )
+
+          # The file will be copied to: _site/assets/al_img_tools/js/[filename]
+          site.static_files << static_file
+          Jekyll.logger.info("AlImgTools:", "Registered #{js_file} for copying to #{ASSETS_DIR}/#{PLUGIN_NAME}/#{JS_DIR}/")
+        else
+          Jekyll.logger.warn("AlImgTools:", "JavaScript file not found: #{source_path}")
+        end
+      end
+    end
+  end
+
   # Library configurations
   LIBRARIES = {
     'img-comparison-slider' => {
@@ -87,6 +146,9 @@ module AlImgTools
       page = context.registers[:page]
       output = []
 
+      # Get the base URL for assets
+      base_url = context['site']['baseurl'] || ''
+
       # Image Layouts
       if page['images']
         # Image Comparison
@@ -123,14 +185,14 @@ module AlImgTools
               integrity="#{LIBRARIES['medium_zoom']['integrity']['js']}"
               crossorigin="anonymous"
             ></script>
-            <script defer src="{{ '/lib/assets/js/zoom.js' | relative_url | bust_file_cache }}"></script>
+            <script defer src="#{base_url}/assets/#{PLUGIN_NAME}/js/zoom.js"></script>
           HTML
         end
 
         # PhotoSwipe
         if page['images']['photoswipe']
           output << <<~HTML
-            <script defer src="{{ '/lib/assets/js/photoswipe-setup.js' | relative_url | bust_file_cache }}" type="module"></script>
+            <script defer src="#{base_url}/assets/#{PLUGIN_NAME}/js/photoswipe-setup.js" type="module"></script>
           HTML
         end
 
@@ -155,7 +217,7 @@ module AlImgTools
               integrity="#{LIBRARIES['venobox']['integrity']['js']}"
               crossorigin="anonymous"
             ></script>
-            <script defer src="{{ '/lib/assets/js/venobox-setup.js' | relative_url | bust_file_cache }}" type="text/javascript"></script>
+            <script defer src="#{base_url}/assets/#{PLUGIN_NAME}/js/venobox-setup.js"></script>
           HTML
         end
       end
