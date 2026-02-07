@@ -78,7 +78,7 @@ module AlImgTools
     'lightbox2' => {
       'integrity' => {
         'css' => 'sha256-uypRbsAiJcFInM/ndyI/JHpzNe6DtUNXaWEUWEPfMGo=',
-        'js' => 'sha256-A6jI5V9s1JznkWwsBaRK8kSeXLgIqQfxfnvdOZEURY='
+        'js' => 'sha256-A6jI5V9s1JznkWwsBaRK8kSeXLgIqQfxfnvdDOZEURY='
       },
       'url' => {
         'css' => 'https://cdn.jsdelivr.net/npm/lightbox2@{{version}}/dist/css/lightbox.min.css',
