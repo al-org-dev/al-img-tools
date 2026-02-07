@@ -9,6 +9,7 @@ A Jekyll plugin that provides various image manipulation features for al-folio s
 - Medium zoom
 - Image sliders
 - PhotoSwipe galleries
+- Spotlight galleries
 - VenoBox galleries
 
 ## Installation
@@ -41,19 +42,28 @@ plugins:
 layout: page
 title: Gallery
 images:
-  gallery: true      # Enable lightbox gallery
+  lightbox2: true    # Enable Lightbox2 gallery (or use `gallery: true`)
   compare: true      # Enable image comparison slider
   slider: true       # Enable image slider
   photoswipe: true   # Enable PhotoSwipe gallery
+  spotlight: true    # Enable Spotlight gallery
   venobox: true      # Enable VenoBox gallery
-  medium_zoom: true  # Enable medium zoom for images
+  medium_zoom: true  # Optional per-page medium zoom override
 ---
 ```
 
-3. Add the image scripts tag to your layout file (e.g., `_layouts/default.html`):
+3. Add the image tags to your layout:
+
+- In the `<head>` (for CSS):
 
 ```liquid
-{% al_img_scripts %}
+{% al_img_tools_styles %}
+```
+
+- Before `</body>` (for JavaScript):
+
+```liquid
+{% al_img_tools_scripts %}
 ```
 
 ## Development

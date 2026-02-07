@@ -5,7 +5,7 @@ module AlImgTools
   PLUGIN_NAME = 'al_img_tools'
   ASSETS_DIR = 'assets'
   JS_DIR = 'js'
-  JS_FILES = ['zoom.js', 'photoswipe-setup.js', 'venobox-setup.js'].freeze
+  JS_FILES = ['zoom.js', 'venobox-setup.js'].freeze
 
   # Custom StaticFile class to track when files are written
   class PluginStaticFile < Jekyll::StaticFile
@@ -127,6 +127,16 @@ module AlImgTools
       },
       'version' => '11.0.5'
     },
+    'spotlight' => {
+      'integrity' => {
+        'css' => 'sha256-Dsvkx8BU8ntk9Iv+4sCkgHRynYSQQFP6gJfBN5STFLY='
+      },
+      'url' => {
+        'css' => 'https://cdn.jsdelivr.net/npm/spotlight.js@{{version}}/dist/css/spotlight.min.css',
+        'js' => 'https://cdn.jsdelivr.net/npm/spotlight.js@{{version}}/dist/spotlight.bundle.min.js'
+      },
+      'version' => '0.7.8'
+    },
     'venobox' => {
       'integrity' => {
         'css' => 'sha256-ohJEB0/WsBOdBD+gQO/MGfyJSbTUI8OOLbQGdkxD6Cg=',
@@ -140,86 +150,215 @@ module AlImgTools
     }
   }
 
-  class ImageToolsScriptsTag < Liquid::Tag
-    def render(context)
-      site = context.registers[:site]
+  class BaseImageToolsTag < Liquid::Tag
+    private
+
+    def page_images(context)
       page = context.registers[:page]
+      images = page && page['images']
+      images.is_a?(Hash) ? images : {}
+    end
+
+    def base_url(context)
+      site = context['site']
+      site && site['baseurl'] ? site['baseurl'] : ''
+    end
+
+    def medium_zoom_enabled?(context, images)
+      site = context['site']
+      site_enabled = site && site['enable_medium_zoom']
+      !!(site_enabled || images['medium_zoom'])
+    end
+
+    def lightbox_enabled?(images)
+      !!(images['lightbox2'] || images['gallery'])
+    end
+
+    def asset_url(context, file_name)
+      "#{base_url(context)}/#{ASSETS_DIR}/#{PLUGIN_NAME}/#{JS_DIR}/#{file_name}"
+    end
+
+    def library_url(library, asset_type)
+      library_cfg = LIBRARIES[library]
+      return nil unless library_cfg
+
+      url = library_cfg.dig('url', asset_type)
+      return nil unless url
+
+      url.sub('{{version}}', library_cfg['version'])
+    end
+
+    def library_integrity(library, asset_type)
+      LIBRARIES.dig(library, 'integrity', asset_type)
+    end
+  end
+
+  class ImageToolsStylesTag < BaseImageToolsTag
+    def render(context)
+      images = page_images(context)
       output = []
 
-      # Get the base URL for assets
-      base_url = context['site']['baseurl'] || ''
+      if images['compare']
+        output << <<~HTML
+          <!-- Image comparison slider -->
+          <link
+            rel="stylesheet"
+            href="#{library_url('img-comparison-slider', 'css')}"
+            integrity="#{library_integrity('img-comparison-slider', 'css')}"
+            crossorigin="anonymous"
+          >
+        HTML
+      end
 
-      # Image Layouts
-      if page['images']
-        # Image Comparison
-        if page['images']['compare']
-          output << <<~HTML
-            <script
-              defer
-              src="#{LIBRARIES['img-comparison-slider']['url']['js'].sub('{{version}}', LIBRARIES['img-comparison-slider']['version'])}"
-              integrity="#{LIBRARIES['img-comparison-slider']['integrity']['js']}"
-              crossorigin="anonymous"
-            ></script>
-          HTML
-        end
+      if lightbox_enabled?(images)
+        output << <<~HTML
+          <!-- Lightbox2 -->
+          <link
+            rel="stylesheet"
+            href="#{library_url('lightbox2', 'css')}"
+            integrity="#{library_integrity('lightbox2', 'css')}"
+            crossorigin="anonymous"
+          >
+        HTML
+      end
 
-        # Gallery/Lightbox
-        if page['images']['gallery']
-          output << <<~HTML
-            <script
-              defer
-              src="#{LIBRARIES['lightbox2']['url']['js'].sub('{{version}}', LIBRARIES['lightbox2']['version'])}"
-              integrity="#{LIBRARIES['lightbox2']['integrity']['js']}"
-              crossorigin="anonymous"
-            ></script>
-          HTML
-        end
+      if images['photoswipe']
+        output << <<~HTML
+          <!-- PhotoSwipe -->
+          <link
+            rel="stylesheet"
+            href="#{library_url('photoswipe', 'css')}"
+            crossorigin="anonymous"
+          >
+        HTML
+      end
 
-        # Medium Zoom
-        if page['images']['medium_zoom']
-          output << <<~HTML
-            <!-- Medium Zoom JS -->
-            <script
-              defer
-              src="#{LIBRARIES['medium_zoom']['url']['js'].sub('{{version}}', LIBRARIES['medium_zoom']['version'])}"
-              integrity="#{LIBRARIES['medium_zoom']['integrity']['js']}"
-              crossorigin="anonymous"
-            ></script>
-            <script defer src="#{base_url}/assets/#{PLUGIN_NAME}/js/zoom.js"></script>
-          HTML
-        end
+      if images['slider']
+        output << <<~HTML
+          <!-- Image slider -->
+          <link
+            rel="stylesheet"
+            href="#{library_url('swiper', 'css')}"
+            integrity="#{library_integrity('swiper', 'css')}"
+            crossorigin="anonymous"
+          >
+        HTML
+      end
 
-        # PhotoSwipe
-        if page['images']['photoswipe']
-          output << <<~HTML
-            <script defer src="#{base_url}/assets/#{PLUGIN_NAME}/js/photoswipe-setup.js" type="module"></script>
-          HTML
-        end
+      if images['spotlight']
+        output << <<~HTML
+          <!-- Spotlight -->
+          <link
+            rel="stylesheet"
+            href="#{library_url('spotlight', 'css')}"
+            integrity="#{library_integrity('spotlight', 'css')}"
+            crossorigin="anonymous"
+          >
+        HTML
+      end
 
-        # Slider
-        if page['images']['slider']
-          output << <<~HTML
-            <script
-              defer
-              src="#{LIBRARIES['swiper']['url']['js'].sub('{{version}}', LIBRARIES['swiper']['version'])}"
-              integrity="#{LIBRARIES['swiper']['integrity']['js']}"
-              crossorigin="anonymous"
-            ></script>
-          HTML
-        end
+      if images['venobox']
+        output << <<~HTML
+          <!-- Venobox -->
+          <link
+            rel="stylesheet"
+            href="#{library_url('venobox', 'css')}"
+            integrity="#{library_integrity('venobox', 'css')}"
+            crossorigin="anonymous"
+          >
+        HTML
+      end
 
-        # VenoBox
-        if page['images']['venobox']
-          output << <<~HTML
-            <script
-              defer
-              src="#{LIBRARIES['venobox']['url']['js'].sub('{{version}}', LIBRARIES['venobox']['version'])}"
-              integrity="#{LIBRARIES['venobox']['integrity']['js']}"
-              crossorigin="anonymous"
-            ></script>
-            <script defer src="#{base_url}/assets/#{PLUGIN_NAME}/js/venobox-setup.js"></script>
-          HTML
-        end
+      output.join("\n")
+    end
+  end
+
+  class ImageToolsScriptsTag < BaseImageToolsTag
+    def render(context)
+      images = page_images(context)
+      output = []
+
+      if medium_zoom_enabled?(context, images)
+        output << <<~HTML
+          <!-- Medium Zoom JS -->
+          <script
+            defer
+            src="#{library_url('medium_zoom', 'js')}"
+            integrity="#{library_integrity('medium_zoom', 'js')}"
+            crossorigin="anonymous"
+          ></script>
+          <script defer src="#{asset_url(context, 'zoom.js')}"></script>
+        HTML
+      end
+
+      if images['compare']
+        output << <<~HTML
+          <script
+            defer
+            src="#{library_url('img-comparison-slider', 'js')}"
+            integrity="#{library_integrity('img-comparison-slider', 'js')}"
+            crossorigin="anonymous"
+          ></script>
+        HTML
+      end
+
+      if lightbox_enabled?(images)
+        output << <<~HTML
+          <script
+            defer
+            src="#{library_url('lightbox2', 'js')}"
+            integrity="#{library_integrity('lightbox2', 'js')}"
+            crossorigin="anonymous"
+          ></script>
+        HTML
+      end
+
+      if images['photoswipe']
+        output << <<~HTML
+          <script type="module">
+            import PhotoSwipeLightbox from "#{library_url('photoswipe-lightbox', 'js')}";
+            import PhotoSwipe from "#{library_url('photoswipe', 'js')}";
+            const photoswipe = new PhotoSwipeLightbox({
+              gallery: ".pswp-gallery",
+              children: "a",
+              pswpModule: PhotoSwipe,
+            });
+            photoswipe.init();
+          </script>
+        HTML
+      end
+
+      if images['slider']
+        output << <<~HTML
+          <script
+            defer
+            src="#{library_url('swiper', 'js')}"
+            integrity="#{library_integrity('swiper', 'js')}"
+            crossorigin="anonymous"
+          ></script>
+        HTML
+      end
+
+      if images['spotlight']
+        output << <<~HTML
+          <script
+            defer
+            src="#{library_url('spotlight', 'js')}"
+            crossorigin="anonymous"
+          ></script>
+        HTML
+      end
+
+      if images['venobox']
+        output << <<~HTML
+          <script
+            defer
+            src="#{library_url('venobox', 'js')}"
+            integrity="#{library_integrity('venobox', 'js')}"
+            crossorigin="anonymous"
+          ></script>
+          <script defer src="#{asset_url(context, 'venobox-setup.js')}"></script>
+        HTML
       end
 
       output.join("\n")
@@ -227,4 +366,5 @@ module AlImgTools
   end
 end
 
+Liquid::Template.register_tag('al_img_tools_styles', AlImgTools::ImageToolsStylesTag)
 Liquid::Template.register_tag('al_img_tools_scripts', AlImgTools::ImageToolsScriptsTag)
