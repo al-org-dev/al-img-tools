@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name          = "al_img_tools"
-  spec.version       = "0.1.0"
+  spec.version       = "1.0.0"
   spec.authors       = ["al-org"]
   spec.email         = ["dev@al-org.dev"]
   spec.summary       = "Image interaction tags and assets for Jekyll"
