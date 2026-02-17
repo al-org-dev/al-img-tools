@@ -4,8 +4,8 @@ module AlImgTools
   # Directory structure constants
   PLUGIN_NAME = 'al_img_tools'
   ASSETS_DIR = 'assets'
+  CSS_DIR = 'css'
   JS_DIR = 'js'
-  JS_FILES = ['zoom.js', 'venobox-setup.js'].freeze
 
   # Custom StaticFile class to track when files are written
   class PluginStaticFile < Jekyll::StaticFile
@@ -15,7 +15,7 @@ module AlImgTools
         if result
           Jekyll.logger.info("AlImgTools:", "Successfully copied #{name} from #{path} to #{destination(dest)}")
         else
-          Jekyll.logger.error("AlImgTools:", "Failed to copy #{name} from #{path}")
+          Jekyll.logger.debug("AlImgTools:", "Skipped unchanged asset #{name} from #{path}")
         end
       end
     end
@@ -26,36 +26,14 @@ module AlImgTools
     priority :low
 
     def generate(site)
-      # Get the plugin's assets directory path - now includes the full desired structure
       plugin_lib_path = File.expand_path('.', __dir__)
-      Jekyll.logger.info("AlImgTools:", "Plugin lib directory: #{plugin_lib_path}")
+      assets_root = File.join(plugin_lib_path, ASSETS_DIR, PLUGIN_NAME)
 
-      # Register each JS file
-      JS_FILES.each do |js_file|
-        # Construct source path - now includes the full path structure we want in the output
-        source_path = File.join(plugin_lib_path, ASSETS_DIR, PLUGIN_NAME, JS_DIR, js_file)
-        Jekyll.logger.info("AlImgTools:", "Looking for source file: #{source_path}")
+      Dir.glob(File.join(assets_root, '**', '*')).sort.each do |source_path|
+        next if File.directory?(source_path)
 
-        # Only add the file if it exists
-        if File.exist?(source_path)
-          # Create a static file with:
-          # - site: the Jekyll site instance
-          # - base: the base directory containing the file
-          # - dir: the directory relative to base (used to construct the destination path)
-          # - name: the file name
-          static_file = PluginStaticFile.new(
-            site,
-            plugin_lib_path,                            # base directory
-            File.join(ASSETS_DIR, PLUGIN_NAME, JS_DIR), # source dir relative to base
-            js_file                                     # filename
-          )
-
-          # The file will be copied to: _site/assets/al_img_tools/js/[filename]
-          site.static_files << static_file
-          Jekyll.logger.info("AlImgTools:", "Registered #{js_file} for copying to #{ASSETS_DIR}/#{PLUGIN_NAME}/#{JS_DIR}/")
-        else
-          Jekyll.logger.warn("AlImgTools:", "JavaScript file not found: #{source_path}")
-        end
+        relative_dir = File.dirname(source_path).sub("#{plugin_lib_path}/", '')
+        site.static_files << PluginStaticFile.new(site, plugin_lib_path, relative_dir, File.basename(source_path))
       end
     end
   end
@@ -74,17 +52,6 @@ module AlImgTools
         'map' => 'https://cdn.jsdelivr.net/npm/img-comparison-slider@{{version}}/dist/index.js.map'
       },
       'version' => '8.0.6'
-    },
-    'lightbox2' => {
-      'integrity' => {
-        'css' => 'sha256-uypRbsAiJcFInM/ndyI/JHpzNe6DtUNXaWEUWEPfMGo=',
-        'js' => 'sha256-A6jI5V9s1JznkWwsBaRK8kSeXLgIqQfxfnvdDOZEURY='
-      },
-      'url' => {
-        'css' => 'https://cdn.jsdelivr.net/npm/lightbox2@{{version}}/dist/css/lightbox.min.css',
-        'js' => 'https://cdn.jsdelivr.net/npm/lightbox2@{{version}}/dist/js/lightbox.min.js'
-      },
-      'version' => '2.11.5'
     },
     'medium_zoom' => {
       'integrity' => {
@@ -174,8 +141,8 @@ module AlImgTools
       !!(images['lightbox2'] || images['gallery'])
     end
 
-    def asset_url(context, file_name)
-      "#{base_url(context)}/#{ASSETS_DIR}/#{PLUGIN_NAME}/#{JS_DIR}/#{file_name}"
+    def asset_url(context, file_name, dir = JS_DIR)
+      "#{base_url(context)}/#{ASSETS_DIR}/#{PLUGIN_NAME}/#{dir}/#{file_name}"
     end
 
     def library_url(library, asset_type)
@@ -212,12 +179,10 @@ module AlImgTools
 
       if lightbox_enabled?(images)
         output << <<~HTML
-          <!-- Lightbox2 -->
+          <!-- Lightbox adapter -->
           <link
             rel="stylesheet"
-            href="#{library_url('lightbox2', 'css')}"
-            integrity="#{library_integrity('lightbox2', 'css')}"
-            crossorigin="anonymous"
+            href="#{asset_url(context, 'lightbox2-adapter.css', CSS_DIR)}"
           >
         HTML
       end
@@ -304,12 +269,7 @@ module AlImgTools
 
       if lightbox_enabled?(images)
         output << <<~HTML
-          <script
-            defer
-            src="#{library_url('lightbox2', 'js')}"
-            integrity="#{library_integrity('lightbox2', 'js')}"
-            crossorigin="anonymous"
-          ></script>
+          <script defer src="#{asset_url(context, 'lightbox2-adapter.js')}"></script>
         HTML
       end
 

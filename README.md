@@ -5,7 +5,7 @@ A Jekyll plugin that provides various image manipulation features for al-folio s
 ## Features
 
 - Image comparison sliders
-- Lightbox galleries
+- Lightbox-style galleries (vanilla adapter for `data-lightbox` markup)
 - Medium zoom
 - Image sliders
 - PhotoSwipe galleries
@@ -42,7 +42,7 @@ plugins:
 layout: page
 title: Gallery
 images:
-  lightbox2: true # Enable Lightbox2 gallery (or use `gallery: true`)
+  lightbox2: true # Enable lightbox adapter (or use `gallery: true`)
   compare: true # Enable image comparison slider
   slider: true # Enable image slider
   photoswipe: true # Enable PhotoSwipe gallery
