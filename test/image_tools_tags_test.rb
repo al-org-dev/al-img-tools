@@ -23,19 +23,20 @@ class AlImgToolsTagsTest < Minitest::Test
     )
 
     assert_includes output, 'img-comparison-slider'
-    assert_includes output, 'lightbox2'
+    assert_includes output, '/base/assets/al_img_tools/css/lightbox2-adapter.css'
     assert_includes output, 'venobox'
   end
 
   def test_renders_requested_scripts_with_baseurl
     output = render_scripts(
       site: { 'baseurl' => '/base', 'enable_medium_zoom' => true },
-      page: { 'images' => { 'venobox' => true } }
+      page: { 'images' => { 'venobox' => true, 'lightbox2' => true } }
     )
 
     assert_includes output, 'medium-zoom'
     assert_includes output, '/base/assets/al_img_tools/js/zoom.js'
     assert_includes output, '/base/assets/al_img_tools/js/venobox-setup.js'
+    assert_includes output, '/base/assets/al_img_tools/js/lightbox2-adapter.js'
   end
 
   def test_returns_empty_output_when_no_image_features_enabled
@@ -55,5 +56,7 @@ class AlImgToolsTagsTest < Minitest::Test
     names = site.static_files.map(&:name)
     assert_includes names, 'zoom.js'
     assert_includes names, 'venobox-setup.js'
+    assert_includes names, 'lightbox2-adapter.js'
+    assert_includes names, 'lightbox2-adapter.css'
   end
 end
