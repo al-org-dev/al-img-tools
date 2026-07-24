@@ -59,4 +59,25 @@ class AlImgToolsTagsTest < Minitest::Test
     assert_includes names, 'lightbox2-adapter.js'
     assert_includes names, 'lightbox2-adapter.css'
   end
+
+  def test_slider_pins_patched_swiper_with_matching_integrity
+    styles = render_styles(
+      site: { 'baseurl' => '' },
+      page: { 'images' => { 'slider' => true } }
+    )
+    scripts = render_scripts(
+      site: { 'baseurl' => '' },
+      page: { 'images' => { 'slider' => true } }
+    )
+
+    # Security pin: Swiper must stay >= 12.1.2 to avoid the prototype-pollution
+    # vulnerability CVE-2026-27212 (affects >= 6.5.1, < 12.1.2). The SRI hashes
+    # below must match the exact bytes served for swiper@12.1.2.
+    assert_includes scripts, 'swiper@12.1.2/swiper-element-bundle.min.js'
+    assert_includes scripts, 'sha256-J5Bi68Hj65rj5tUW3iI6qEJFxBuP5ncTmqL1+3NFqO0='
+    assert_includes styles, 'swiper@12.1.2/swiper-bundle.min.css'
+    assert_includes styles, 'sha256-luxVrnBnR9z2CvS7noxOPcUPX9nt8w0l4LscODUm5/k='
+    refute_includes scripts, 'swiper@11.0.5'
+    refute_includes styles, 'swiper@11.0.5'
+  end
 end
