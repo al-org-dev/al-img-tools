@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3 - 2026-07-24
+
+### Security
+
+- Bumped Swiper from `11.0.5` to `12.1.2` to remediate a prototype-pollution vulnerability (CVE-2026-27212 / GHSA-hmx5-qpq5-p643, CVSS 9.4) affecting Swiper `>= 6.5.1, < 12.1.2`. Updated the pinned CDN version and the CSS / JS / source-map SRI integrity hashes to match the new release. The image slider consumes the `swiper-element` Web Component bundle, whose `<swiper-container>` custom-element API is unchanged across this major bump, so no template or setup-script changes are required.
+
 ## 1.0.2 - 2026-02-17
 
 - Finalized plugin-owned lightbox runtime by shipping a vanilla Lightbox2-compatible adapter path.

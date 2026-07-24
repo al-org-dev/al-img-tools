@@ -83,16 +83,16 @@ module AlImgTools
     },
     'swiper' => {
       'integrity' => {
-        'css' => 'sha256-yUoNxsvX+Vo8Trj3lZ/Y5ZBf8HlBFsB6Xwm7rH75/9E=',
-        'js' => 'sha256-BPrwikijIybg9OQC5SYFFqhBjERYOn97tCureFgYH1E=',
-        'map' => 'sha256-lbF5CsospW93otqvWOIbbhj80CjazrZXvamD7nC7TBI='
+        'css' => 'sha256-luxVrnBnR9z2CvS7noxOPcUPX9nt8w0l4LscODUm5/k=',
+        'js' => 'sha256-J5Bi68Hj65rj5tUW3iI6qEJFxBuP5ncTmqL1+3NFqO0=',
+        'map' => 'sha256-1oHeaqu+exvac/w5nr1IRk0x38JOQxOuaIvgqduHQxo='
       },
       'url' => {
         'css' => 'https://cdn.jsdelivr.net/npm/swiper@{{version}}/swiper-bundle.min.css',
         'js' => 'https://cdn.jsdelivr.net/npm/swiper@{{version}}/swiper-element-bundle.min.js',
         'map' => 'https://cdn.jsdelivr.net/npm/swiper@{{version}}/swiper-element-bundle.min.js.map'
       },
-      'version' => '11.0.5'
+      'version' => '12.1.2'
     },
     'spotlight' => {
       'integrity' => {
